@@ -1,11 +1,11 @@
 const express = require("express");
 const app = express();
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 3000;
 
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
-const ellipses = [];
+const canvas = [];
 
 app.use(express.static(__dirname + "/public"));
 app.set("view engine", "ejs");
@@ -17,11 +17,11 @@ app.get("/", (req, res) => {
 io.on("connection", socket => {
   console.log("a user connected");
 
-  socket.emit("init", ellipses);
+  socket.emit("init", canvas);
 
-  socket.on("draw", ({ x, y }) => {
-    ellipses.push({ x, y });
-    io.emit("draw", { x: x, y: y });
+  socket.on("draw", shape => {
+    canvas.push(shape);
+    io.emit("updateCanvas", canvas);
   });
 
   socket.on("disconnect", () => {
