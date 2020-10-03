@@ -1,29 +1,51 @@
 const socket = io();
-let ellipses = [];
-socket.on("init", function (getEllipses) {
-  ellipses = getEllipses;
+let canvas = [];
+let backgroundColor = "#B8D8BA";
+let strokeColor = "#FFF";
+
+socket.on("init", syncedCanvas => {
+  canvas = syncedCanvas;
+});
+
+socket.on("updateCanvas", syncedCanvas => {
+  canvas = syncedCanvas;
 });
 
 function setup() {
-  const canvas = createCanvas(800, 600);
+  const canvas = createCanvas(900, 650);
   canvas.parent("sketch-container");
 
-  background(100);
+  background(backgroundColor);
+  strokeColor = strokeColor;
+  strokeWeight(4);
 }
 
 function draw() {
-  for (const { x, y } of ellipses) {
-    ellipse(x, y, 20, 20);
+  stroke(strokeColor);
+  if (mouseIsPressed === true) {
+    line(mouseX, mouseY, pmouseX, pmouseY);
+    socket.emit("draw", {
+      shape: "line",
+      color: strokeColor,
+      x1: mouseX,
+      y1: mouseY,
+      x2: pmouseX,
+      y2: pmouseY,
+    });
+  }
+
+  for (const shape of canvas) {
+    if (shape.shape === "line") {
+      stroke(shape.color);
+      line(shape.x1, shape.y1, shape.x2, shape.y2);
+    }
   }
 }
 
-function mouseClicked() {
-  ellipse(mouseX, mouseY, 20, 20);
-  socket.emit("draw", { x: mouseX, y: mouseY });
-  // prevent default
-  return false;
-}
-
-socket.on("draw", function ({ x, y }) {
-  ellipse(x, y, 20, 20);
+$(document).ready(function () {
+  $(".color").on("click", function () {
+    $(".color").removeClass("selected");
+    strokeColor = $(this).css("background-color");
+    $(this).addClass("selected");
+  });
 });
